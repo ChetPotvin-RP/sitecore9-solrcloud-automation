@@ -7,8 +7,7 @@
     [string]$SearchStaxUsername,
     [Parameter(Mandatory = $true)]
     [string]$SearchStaxPassword,
-    [Parameter(Mandatory = $true)]
-    [string]$ConfigDir = ".",
+    [string]$ConfigDir,
     [string]$SearchStaxApiBaseUrl = "https://app.searchstax.com/api/rest/v2/",
     [string]$SitecoreConfigZipFileName = "sitecore_configs.zip",
     [string]$CollectionPrefix = "sitecore",   
@@ -104,7 +103,13 @@ $token = New-AuthToken  -SearchStaxUsername $SearchStaxUsername `
 $SitecoreCollections = $SitecoreDefaultCollections | ForEach-Object { "${CollectionPrefix}_$_" }
 $SitecoreCollections += $AdditionalCollections
 
-$SitecoreConfigFilePath = "${ConfigDir}${SitecoreConfigZipFileName}"
+if ([string]::IsNullOrEmpty($ConfigDir))
+{
+    $ConfigDir = Split-Path $PSScriptRoot -Parent
+    $ConfigDir = "${ConfigDir}\conf"
+}
+
+$SitecoreConfigFilePath = "${ConfigDir}\${SitecoreConfigZipFileName}"
 
 ForEach ($collection in $SitecoreCollections) {
 

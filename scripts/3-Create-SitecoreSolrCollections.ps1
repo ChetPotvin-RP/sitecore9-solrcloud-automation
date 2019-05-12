@@ -32,16 +32,22 @@ $AllCollections = $SitecoreDefaultCollections | ForEach-Object { "${CollectionPr
 $AllCollections += $AdditionalCollections
 
 $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $Username,$Password)))
+$headers = @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 
 ForEach ($collection in $AllCollections) { 
 
     $createCollectionCommand = "${SolrHost}/solr/admin/collections?action=CREATE&name=${collection}&collection.configName=${collection}&replicationFactor=${ReplicationFactor}&numShards=${NumberOfShards}"
-    Write-Host $createCollectionCommand
+    Write-Host "Creating Collection: ${collection}"
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $response = Invoke-RestMethod -Uri $createCollectionCommand -Method GET -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+    $response = Invoke-RestMethod -Uri $createCollectionCommand -Method GET -Headers $headers
+    $success = $response.responseHeader.status -eq 0
 
-    Write-Host $response.Content
+    if ($success -eq $true) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red 
+    }
 }
 
 $XdbCollections = $XdbCollections | ForEach-Object { "${CollectionPrefix}_$_" }
@@ -49,11 +55,16 @@ $XdbCollections = $XdbCollections | ForEach-Object { "${CollectionPrefix}_$_" }
 ForEach ($collection in $XdbCollections) {
    
     $createCollectionCommand = "${SolrHost}/solr/admin/collections?action=CREATE&name=${collection}&collection.configName=_default&replicationFactor=${ReplicationFactor}&numShards=${NumberOfShards}"
-    Write-Host $createCollectionCommand
+    Write-Host "Creating Collection: ${collection}"
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $response = Invoke-WebRequest -Uri $createCollectionCommand -Method GET -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+    $response = Invoke-RestMethod -Uri $createCollectionCommand -Method GET -Headers $headers
+    $success = $response.responseHeader.status -eq 0
 
-    Write-Host $response.Content
+    if ($success -eq $true) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red 
+    }
 }
 
